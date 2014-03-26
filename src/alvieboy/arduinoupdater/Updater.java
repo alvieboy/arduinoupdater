@@ -188,6 +188,10 @@ public class Updater implements ActionListener
 
     }
 
+    public void configure(Document doc)
+    {
+        /// ....
+    }
 
     public void initialValidation()
     {
@@ -198,7 +202,11 @@ public class Updater implements ActionListener
         try {
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(configuration);
-            
+
+            // Handle doc tags. Need those to configure the updater
+
+            configure(doc);
+
             List<String> path = new ArrayList<String>();
             validateInstallation( path, getBaseDirectory(), hashes );
 

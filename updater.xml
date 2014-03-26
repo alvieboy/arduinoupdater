@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<Updater>
+ <BaseHREF>http://localhost/arduino/</BaseHREF>
+ <Arch>linux-x86</Arch>
+ <Self>
+  <File>lib/arduino-updater.jar</File>
+ </Self>
+</Updater>
