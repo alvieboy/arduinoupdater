@@ -11,12 +11,12 @@ Scanner::Scanner()
 {
 }
 
-void Scanner::scan(ReleaseFileList &r,const QString &directory)
+void Scanner::scan(ReleaseFileList &r,const QString &directory, const QString &deployPath)
 {
     QStack<QString> dirname;
     QDir d(directory);
     if (d.exists())  {
-        scanRecursive( d, r , dirname);
+        scanRecursive( deployPath, d, r , dirname);
     }
 }
 
@@ -63,7 +63,7 @@ QString qstackJoin(const QStack<QString> &stack, const QString &delim)
     return result;
 }
 
-void Scanner::scanRecursive(QDir &d, ReleaseFileList &r, QStack<QString> &dirname)
+void Scanner::scanRecursive(const QString &deployPath, QDir &d, ReleaseFileList &r, QStack<QString> &dirname)
 {
     QDirIterator it(d);
     static QString pathDelim="/";
@@ -78,7 +78,7 @@ void Scanner::scanRecursive(QDir &d, ReleaseFileList &r, QStack<QString> &dirnam
             }
             QDir nd(info.filePath());
             dirname.push(info.fileName());
-            scanRecursive(nd, r,dirname);
+            scanRecursive(deployPath, nd, r,dirname);
             dirname.pop();
         } else {
             QFile file(info.filePath());
@@ -96,9 +96,25 @@ void Scanner::scanRecursive(QDir &d, ReleaseFileList &r, QStack<QString> &dirnam
             rf.name = qstackJoin( dirname, pathDelim);
             rf.size = info.size();
             rf.exec = info.isExecutable();
+            if(deployPath.size()) {
+                deployFile( deployPath, file, rf.sha.toHex());
+            }
             r.push_back(rf);
             dirname.pop();
             file.close();
         }
+    }
+}
+
+void Scanner::deployFile(const QString &deployPath,QFile &file, const QString &sha)
+{
+    QString target = deployPath + QDir::separator() + "blobs" + QDir::separator() + sha;
+    if (QFile(target).exists()) {
+        return;
+    }
+    qDebug()<<"Writing"<<target;
+    if (!file.copy(target)) {
+        /* errr..... */
+        qDebug()<<file.error();
     }
 }

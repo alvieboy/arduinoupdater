@@ -116,40 +116,6 @@
       <item>
        <widget class="QTreeView" name="treeView"/>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <property name="topMargin">
-         <number>10</number>
-        </property>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="newReleaseButton">
-          <property name="text">
-           <string>New sub-release</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="deleteReleaseButton">
-          <property name="text">
-           <string>Delete release</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
      </layout>
     </item>
    </layout>
@@ -256,38 +222,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>newReleaseButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>onNewRelease()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>271</x>
-     <y>352</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>219</x>
-     <y>199</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>treeView</sender>
-   <signal>clicked(QModelIndex)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>onTreeItemClicked(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>219</x>
-     <y>200</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>219</x>
-     <y>199</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>osComboBox</sender>
    <signal>currentIndexChanged(QString)</signal>
    <receiver>MainWindow</receiver>
@@ -303,6 +237,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSave_2</sender>
+   <signal>activated()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onSave()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>219</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onOpen()</slot>
@@ -310,5 +260,6 @@
   <slot>onNewRelease()</slot>
   <slot>onTreeItemClicked(QModelIndex)</slot>
   <slot>onOSChanged(QString)</slot>
+  <slot>onSave()</slot>
  </slots>
 </ui>

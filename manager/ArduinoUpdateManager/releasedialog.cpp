@@ -41,3 +41,13 @@ QString ReleaseDialog::getDirectory() const
 {
     return ui->directory->text();
 }
+
+QString ReleaseDialog::getReleaseName() const
+{
+    return ui->releaseName->text();
+}
+
+QString ReleaseDialog::getParent() const
+{
+    return ui->releaseComboBox->currentText();
+}

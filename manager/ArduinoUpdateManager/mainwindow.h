@@ -22,11 +22,15 @@ public:
 public slots:
     void onOpen();
     void onExit();
+    void onSave();
     void onNewRelease();
-    void onTreeItemClicked(QModelIndex);
+    void onAddRelease();
     void onOSChanged(QString);
+    void contextualMenu(const QPoint &p);
+    void updateReleaseList(const QString &os);
 protected:
-
+    QString currentOS();
+    void save();
     void openFile(const QString &);
     int parseCurrentFile();
     void showError(const QString &msg);
@@ -36,6 +40,8 @@ private:
     QDomDocument *master;
     QString currentFile;
     Manager manager;
+    QDomElement releasesNode;
+
 };
 
 #endif // MAINWINDOW_H

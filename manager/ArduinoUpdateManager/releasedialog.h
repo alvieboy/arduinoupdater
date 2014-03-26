@@ -14,10 +14,11 @@ class ReleaseDialog : public QDialog
 public:
     explicit ReleaseDialog(QWidget *parent = 0, bool bare=false);
     ~ReleaseDialog();
-    QString getName() const;
-    QString getPath() const;
+    QString getReleaseName() const;
+    QString getParent() const;
     void addRelease(const QString &);
     QString getDirectory() const;
+
 public slots:
     void onChooseDirectory();
 
