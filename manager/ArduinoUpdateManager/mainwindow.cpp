@@ -53,6 +53,8 @@ void MainWindow::onAddRelease()
     ReleaseFileList l;
     scanner.scan(l, dir, manager.getDeployPath());
 
+    if (parent=="<none>")
+        parent.clear();
 
     OSRelease release;
     release.name = name;
@@ -233,52 +235,7 @@ int MainWindow::parseCurrentFile()
 
     qDebug()<<"Loaded all releases";
 
-    /* Parse the configuration items */
-    /*
-     <Configuration>
-     <URL base="http://localhost/~alvieboy/arduino/"/>
-     <Branches>
-     <Branch name="master" leaf="1.0.0">
-     <Description lang="en">Arduino 1.0.X Series</Description>
-     </Branch>
-     <Branch name="1.5" leaf="1.0.0">
-     <Description lang="en">Arduino 1.5.X Series</Description>
-     </Branch>
-     <Branch name="development" leaf="1.0.1">
-     <Description lang="en">Arduino 1.5.X Development</Description>
-     </Branch>
-     </Branches>
-     </Configuration>
-     */
-
-
-    
-#if 0
-
-
-    //defining a couple of items
-    QStandardItem *americaItem = new QStandardItem("Release 1.0.0");
-    QStandardItem *mexicoItem =  new QStandardItem("Release 1.1");
-    QStandardItem *usaItem =     new QStandardItem("Release 1.1.1");
-    QStandardItem *bostonItem =  new QStandardItem("Release 1.1.2");
-    QStandardItem *europeItem =  new QStandardItem("Release 2.0.0");
-    QStandardItem *italyItem =   new QStandardItem("Release 2.0.1 alpha");
-    QStandardItem *romeItem =    new QStandardItem("Release 2.0.1 beta 1");
-    QStandardItem *veronaItem =  new QStandardItem("Release 2.0.1 beta 2");
-    QStandardItem *nItem =  new QStandardItem("Release 2.0.2");
-
-    //building up the hierarchy
-    rootNode->    appendRow(americaItem);
-    rootNode->    appendRow(europeItem);
-    americaItem-> appendRow(mexicoItem);
-    mexicoItem-> appendRow(usaItem);
-    usaItem->     appendRow(bostonItem);
-    europeItem->  appendRow(italyItem);
-    europeItem->   appendRow(romeItem);
-    europeItem->   appendRow(veronaItem);
-    veronaItem->appendRow(nItem);
- 
-#endif
+   
     os = operatingSystems.firstChildElement("OS");
     for (; !os.isNull(); os = os.nextSiblingElement("OS")) {
         QString osname =  os.attribute("name");

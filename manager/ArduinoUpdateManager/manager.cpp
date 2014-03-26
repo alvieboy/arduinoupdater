@@ -4,6 +4,18 @@
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryFile>
+
+bool OSRelease::haveFile(const QString &name) const
+{
+    foreach (const ReleaseFile &f, files) {
+        if (f.name==name)
+            return true;
+    }
+    return false;
+}
+
+
+
 bool Manager::exists(const ReleaseFile &f) const
 {
     return m_shaMap.contains(f.sha);
@@ -137,6 +149,22 @@ void Manager::createLists()
     }
 }
 
+const OSRelease &Manager::getReleaseByName(const QString &name, const OSReleaseList &list)
+{
+    foreach (const OSRelease &r, list) {
+        if (r.name == name)
+            return r;
+    }
+    throw "Invalid release";
+}
+
+bool Manager::isNewFile(const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file)
+{
+    if (release.parent.size()==0)
+        return true;
+    return ! getReleaseByName(release.parent, list).haveFile(file.name);
+}
+
 void Manager::createOSList(const QString &os, QFile &file)
 {
     QDomDocument d;
@@ -171,27 +199,29 @@ void Manager::createOSList(const QString &os, QFile &file)
         release.setAttribute("name", r.name);
         releases.appendChild(release);
         foreach (const ReleaseFile &f, r.files) {
-            if (shaMap.find(f.sha) == shaMap.end()) {
-                rsid++;
-                thisId=rsid;
-                shaMap[f.sha]=rsid;
-                QDomElement rs = d.createElement("Res");
-                rs.setAttribute("id",rsid);
-                rs.setAttribute("sha",QString(f.sha.toHex()));
-                resources.appendChild(rs);
-            } else {
-                thisId = shaMap[f.sha];
+            if (isNewFile(getReleaseList(os),r,f)) {
+                if (shaMap.find(f.sha) == shaMap.end()) {
+                    rsid++;
+                    thisId=rsid;
+                    shaMap[f.sha]=rsid;
+                    QDomElement rs = d.createElement("Res");
+                    rs.setAttribute("id",rsid);
+                    rs.setAttribute("sha",QString(f.sha.toHex()));
+                    rs.setAttribute("size", f.size);
+                    resources.appendChild(rs);
+                } else {
+                    thisId = shaMap[f.sha];
+                }
+                QDomElement file = d.createElement("File");
+                file.setAttribute("target", f.name);
+                file.setAttribute("rsid", thisId);
+                if (f.exec)
+                    file.setAttribute("exec", "yes");
+                release.appendChild(file);
             }
-            QDomElement file = d.createElement("File");
-            file.setAttribute("target", f.name);
-            file.setAttribute("rsid", thisId);
-            file.setAttribute("size", f.size);
-            if (f.exec)
-                file.setAttribute("exec", "yes");
-            release.appendChild(file);
         }
     }
-   
+
 
     QTextStream stream( &file );
     qDebug()<<file.fileName();

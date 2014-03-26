@@ -27,6 +27,7 @@ struct OSRelease
     QString name;
     ReleaseFileList files;
     QString parent;
+    bool haveFile(const QString &name) const;
 };
 
 typedef QVector<OSRelease> OSReleaseList;
@@ -51,6 +52,8 @@ public:
     void createLists();
 protected:
     void createOSList(const QString &os, QFile &file);
+    bool isNewFile(const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file);
+    const OSRelease &getReleaseByName(const QString &name, const OSReleaseList &list);
 private:
     /* Fast list with all hashes */
     QHash<SHA,quint32> m_shaMap;
