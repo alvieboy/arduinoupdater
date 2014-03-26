@@ -18,10 +18,15 @@ public class ReleaseData
         public Release leaf;
     };
 
+    public class Resource {
+        public int id;
+        public String sha;
+        public int size;
+    };
+
     public class ReleaseFile {
         String target;
-        String sha;
-        String source;
+        int rsid;
         boolean executable;
     }
 
@@ -84,7 +89,7 @@ public class ReleaseData
             }
             for (ReleaseFile f: files) {
                 allfiles.removeByTarget(f.target);
-                if (!f.sha.equals("remove")) {
+                if (f.rsid > 0) {
                     allfiles.add(f);
                 }
             }
@@ -93,14 +98,14 @@ public class ReleaseData
         {
             ReleaseFileList files = getFiles();
             for (ReleaseFile f: files) {
-                Debugger.debug("File: " + f.sha + " " +f.target);
+                Debugger.debug("File: " + m_resources.get(f.rsid).sha + " " +f.target);
             }
         }
     };
 
     public class DownloadError extends Exception
     {
-    }
+    };
 
     public class MalformedXMLException extends Exception {
         MalformedXMLException() {super();}
@@ -144,6 +149,9 @@ public class ReleaseData
         Element releaseNode = getFirstChild(m_root,"Releases");
         if (null==releaseNode)
             throw new MalformedXMLException();
+        Element resourceNode = getFirstChild(m_root,"Resources");
+        if (null==resourceNode)
+            throw new MalformedXMLException();
         Element branchesNode = getFirstChild(configNode,"Branches");
         if (null==branchesNode)
             throw new MalformedXMLException();
@@ -153,9 +161,19 @@ public class ReleaseData
             m_base = URL.getAttribute("base");
         }
 
+
+        NodeList resources = resourceNode.getElementsByTagName("Resources");
+        for (i=0; i<resources.getLength();i++){
+            Element e = (Element)resources.item(i);
+            Resource r = new Resource();
+
+            r.id =Integer.parseInt( e.getAttribute("id"));
+            r.size =Integer.parseInt( e.getAttribute("size"));
+            r.sha = e.getAttribute("sha");
+            m_resources.put(new Integer(r.id),r);
+        }
+
         Debugger.debug("Iterating through branches");
-
-
 
         NodeList releases = releaseNode.getElementsByTagName("Release");
         for (i=0; i<releases.getLength();i++){
@@ -182,8 +200,7 @@ public class ReleaseData
                 Element f = (Element)filelist.item(j);
                 ReleaseFile rf = new ReleaseFile();
                 rf.target =  f.getAttribute("target");
-                rf.sha =  f.getAttribute("sha");
-                rf.source =  f.getAttribute("source");
+                rf.rsid =  Integer.parseInt(f.getAttribute("rsid"));
                 rf.executable=false;
                 try {
                     if (f.getAttribute("exec").equals("true"))
@@ -224,7 +241,7 @@ public class ReleaseData
             if (current.containsKey(f.target)) {
                 /* Compare */
                 String sha = current.get(f.target);
-                if (sha.equals(f.sha)) {
+                if (sha.equals(m_resources.get(f.rsid).sha)) {
                     res.keptFiles.add(f);
                 } else {
                     res.replacedFiles.add(f);
@@ -263,12 +280,13 @@ public class ReleaseData
             throw e;
         }
         for (ReleaseFile f: fl) {
-            Debugger.debug("Downloading "+f.source);
+            Debugger.debug("Downloading "+m_resources.get(f.rsid).sha);
             try {
-                URL src = new URL(base, basedir + "/" + f.source );
-                File target = new File(tempfolder, f.source);
+                String sha = m_resources.get(f.rsid).sha;
+                URL src = new URL(base, basedir + "/" + sha );
+                File target = new File(tempfolder, sha );
                 if (target.exists()) {
-                    Debugger.debug("Skipping " + f.source + " cause already exists");
+                    Debugger.debug("Skipping " + sha + " cause already exists");
                 } else {
                     download( target.getPath(), src);
                 }
@@ -311,7 +329,7 @@ public class ReleaseData
                 d.mkdirs();
             }
             File tf=new File(d,path[path.length-1]);
-            copyFile(new File(tempfolder, f.source), tf);
+            copyFile(new File(tempfolder, m_resources.get(f.rsid).sha), tf);
             if (f.executable) {
                 tf.setExecutable(true);
             }
@@ -376,4 +394,5 @@ public class ReleaseData
 
     List<Branch> m_branches;
     List<Release> m_releases;
+    HashMap<Integer,Resource> m_resources;
 };
