@@ -107,25 +107,9 @@ public class ReleaseData
     {
     };
 
-    public class MalformedXMLException extends Exception {
-        MalformedXMLException() {super();}
-        MalformedXMLException(String s) { super(s); }
-    };
-
     public ReleaseData() {
         m_branches=new ArrayList<Branch>();
         m_releases=new ArrayList<Release>();
-    }
-
-    static Element getFirstChild(Element base, String name)
-    {
-        for(Node n=base.getFirstChild(); n!=null; n=n.getNextSibling()){
-            if (n.getNodeType()==Node.ELEMENT_NODE) {
-                if (((Element)n).getTagName().equals(name))
-                    return (Element)n;
-            }
-        }
-        return null;
     }
 
     public Release findReleaseByVersion(String version)
@@ -143,20 +127,20 @@ public class ReleaseData
         m_root = doc.getDocumentElement();
         if (m_root.getTagName() != "UpdateList")
             throw new MalformedXMLException();
-        Element configNode = getFirstChild(m_root, "Configuration");
+        Element configNode = XMLUtil.getFirstChild(m_root, "Configuration");
         if (null==configNode)
             throw new MalformedXMLException();
-        Element releaseNode = getFirstChild(m_root,"Releases");
+        Element releaseNode = XMLUtil.getFirstChild(m_root,"Releases");
         if (null==releaseNode)
             throw new MalformedXMLException();
-        Element resourceNode = getFirstChild(m_root,"Resources");
+        Element resourceNode = XMLUtil.getFirstChild(m_root,"Resources");
         if (null==resourceNode)
             throw new MalformedXMLException();
-        Element branchesNode = getFirstChild(configNode,"Branches");
+        Element branchesNode = XMLUtil.getFirstChild(configNode,"Branches");
         if (null==branchesNode)
             throw new MalformedXMLException();
 
-        Element URL = getFirstChild(configNode, "URL");
+        Element URL = XMLUtil.getFirstChild(configNode, "URL");
         if (null!=URL) {
             m_base = URL.getAttribute("base");
         }

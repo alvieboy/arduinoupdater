@@ -5,7 +5,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
-
+import java.util.zip.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
@@ -21,6 +21,15 @@ import java.net.*;
 public class Updater implements ActionListener
 {
     UpdateWindow win;
+    static String base;
+    static String os;
+
+    public static void setConfiguration(String baseurl, String osname)
+    {
+        base=baseurl;
+        os=osname;
+    }
+
     public void run(String[] a) {
         win = new UpdateWindow(this);
 
@@ -106,25 +115,38 @@ public class Updater implements ActionListener
 
     public static String getBaseHREF() {
 
-        return new String("http://localhost/~alvieboy/arduino" +"/" + "linux-x86" + "/" + "updatelist.xml");
+        return new String( base + "/" + os + "/" + "updatelist.xml");
     }
 
-    public static Document fetchUpdateData() {
+    public static Document fetchUpdateData(boolean compressed) {
         URL base;
 
         InputStream stream;
+        GZIPInputStream gzstream=null;
 
         try {
-            base = new URL(getBaseHREF());
+            if (compressed) {
+                base = new URL(getBaseHREF()+".gz");
+            } else {
+                base = new URL(getBaseHREF());
+            }
             URLConnection conn = base.openConnection();
             conn.setUseCaches(false);
 
             stream = conn.getInputStream();
+            if (compressed) {
+                gzstream = new GZIPInputStream(stream);
+            }
 
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(stream);
+            Document doc;
 
+            if (compressed) {
+                doc = dBuilder.parse(gzstream);
+            } else {
+                doc = dBuilder.parse(stream);
+            }
             return doc;
         } catch (MalformedURLException mfue) {
             // not a url, that's fine
@@ -188,15 +210,26 @@ public class Updater implements ActionListener
 
     }
 
-    public void configure(Document doc)
+    public void configure(Document doc) throws MalformedXMLException
     {
         /// ....
+
+        Element root = doc.getDocumentElement();
+        if (root.getTagName() != "Updater")
+            throw new MalformedXMLException();
+
+        Element baseHREFnode = XMLUtil.getFirstChild(root, "BaseHREF");
+        Element archNode = XMLUtil.getFirstChild(root, "Arch");
+
+        setConfiguration(XMLUtil.getText(baseHREFnode),
+                         XMLUtil.getText(archNode));
     }
 
     public void initialValidation()
     {
         File configuration = getBaseFile("updater.xml");
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+
         Map<String,String> hashes = new HashMap<String,String>();
 
         try {
@@ -223,7 +256,7 @@ public class Updater implements ActionListener
 
     void fetch()
     {
-        Document filelist = fetchUpdateData();
+        Document filelist = fetchUpdateData(true);
         try {
             data = new ReleaseData();
             data.parse(filelist);
@@ -242,7 +275,7 @@ public class Updater implements ActionListener
             data.downloadRelease(res.replacedFiles, r.basedir);
 
             data.applyDownloads(res);*/
-        } catch (ReleaseData.MalformedXMLException e) {
+        } catch (MalformedXMLException e) {
             e.printStackTrace();
             System.err.println("Cannot parse file");
             data=null;
