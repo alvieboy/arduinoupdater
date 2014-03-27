@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QCryptographicHash>
 #include <QStringList>
+#include "compressor.h"
 
 Scanner::Scanner()
 {
@@ -117,4 +118,9 @@ void Scanner::deployFile(const QString &deployPath,QFile &file, const QString &s
         /* errr..... */
         qDebug()<<file.error();
     }
+    Compressor *c = new Compressor();
+    if (c->compressFile(target) == 0) {
+        QFile(target).remove();
+    }
+    delete(c);
 }

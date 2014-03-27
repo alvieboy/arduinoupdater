@@ -7,6 +7,7 @@
 #include <QStandardItemModel>
 #include "scanner.h"
 #include "releasedialog.h"
+#include "compressor.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -162,6 +163,9 @@ void MainWindow::save()
     QTextStream stream( &outFile );
     stream << master->toString();
     qDebug()<<"Saved to file "<<currentFile;
+    stream.flush();
+    outFile.close();
+
     manager.createLists();
 }
 

@@ -17,10 +17,13 @@ SOURCES += main.cpp\
         updatelistmodel.cpp\
         scanner.cpp\
         manager.cpp \
-    releasedialog.cpp
+    releasedialog.cpp\
+    compressor.cpp
 
 HEADERS  += mainwindow.h  updatelistmodel.h scanner.h manager.h \
-    releasedialog.h
+    releasedialog.h compressor.h
 
 FORMS    += mainwindow.ui \
     releasedialog.ui
+
+LIBS += -lz

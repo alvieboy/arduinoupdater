@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryFile>
+#include "compressor.h"
 
 bool OSRelease::haveFile(const QString &name) const
 {
@@ -133,6 +134,8 @@ const QString &Manager::getServerPath() const
 
 void Manager::createLists()
 {
+    Compressor *c = new Compressor();
+
     foreach(const QString os, m_osList) {
         QString tmpl = m_deployPath + QDir::separator() + os + QDir::separator() + "updatelist-XXXXXX";
         QString final = m_deployPath + QDir::separator() + os + QDir::separator() + "updatelist.xml";
@@ -146,7 +149,12 @@ void Manager::createLists()
             f.remove();
         temp.rename(final);
 
+        if (c->compressFile(final, true)<0) {
+            // Erorr...
+        }
+
     }
+    delete(c);
 }
 
 const OSRelease &Manager::getReleaseByName(const QString &name, const OSReleaseList &list)
@@ -226,4 +234,5 @@ void Manager::createOSList(const QString &os, QFile &file)
     QTextStream stream( &file );
     qDebug()<<file.fileName();
     stream << d.toString();
+    stream.flush();
 }
