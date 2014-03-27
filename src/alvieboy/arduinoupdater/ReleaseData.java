@@ -1,6 +1,7 @@
 package arduinoupdater;
 
 import java.util.*;
+import java.util.zip.*;
 import java.net.*;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -264,13 +265,13 @@ public class ReleaseData
             throw e;
         }
         for (ReleaseFile f: fl) {
-            Debugger.debug("Downloading "+m_resources.get(f.rsid).sha);
+            Debugger.debug("Downloading "+m_resources.get(f.rsid).sha+".gz");
             try {
                 String sha = m_resources.get(f.rsid).sha;
-                URL src = new URL(base, basedir + "/" + sha );
-                File target = new File(tempfolder, sha );
+                URL src = new URL(base, basedir + "/" + sha + ".gz" );
+                File target = new File(tempfolder, sha + ".gz" );
                 if (target.exists()) {
-                    Debugger.debug("Skipping " + sha + " cause already exists");
+                    Debugger.debug("Skipping " + sha + ".gz cause already exists");
                 } else {
                     download( target.getPath(), src);
                 }
@@ -301,6 +302,23 @@ public class ReleaseData
         Debugger.debug("Created file " + dst.getPath());
     }
 
+    public void copyFileAndUncompress(File src, File dst) throws IOException
+    {
+        InputStream in = new FileInputStream(src);
+        GZIPInputStream gzin = new GZIPInputStream(in);
+        OutputStream out = new FileOutputStream(dst);
+
+        byte[] buf = new byte[8192];
+        int len;
+        while ((len = gzin.read(buf)) > 0){
+            out.write(buf, 0, len);
+        }
+        in.close();
+        gzin.close();
+        out.close();
+        Debugger.debug("Created file " + dst.getPath());
+    }
+
     public void applyDownloads(MatchResult r) throws IOException
     {
         for (ReleaseFile f: r.newFiles) {
@@ -313,7 +331,7 @@ public class ReleaseData
                 d.mkdirs();
             }
             File tf=new File(d,path[path.length-1]);
-            copyFile(new File(tempfolder, m_resources.get(f.rsid).sha), tf);
+            copyFileAndUncompress(new File(tempfolder, m_resources.get(f.rsid).sha+".gz"), tf);
             if (f.executable) {
                 tf.setExecutable(true);
             }
