@@ -30,17 +30,29 @@ struct OSRelease
     bool haveFile(const QString &name) const;
 };
 
+struct OSBranch
+{
+    QString name;
+    QString description;
+    QString leaf;
+};
+
 typedef QVector<OSRelease> OSReleaseList;
+typedef QVector<OSBranch> OSBranchList;
 
 typedef QHash<QString, OSReleaseList> AllReleaseList;
-
+typedef QHash<QString, OSBranchList> AllBranchList;
 class Manager
 {
 public:
     bool exists(const ReleaseFile &f) const ;
     void add   (const ReleaseFile &f);
     const OSReleaseList &getReleaseList(const QString &os) const;
+    const OSBranchList &getBranchList(const QString &os) const;
+
     void updateReleasesFromXML(QDomElement release);
+    void updateBranchesFromXML(QDomElement release);
+    void saveBranchesToXML(QDomElement release);
     void saveReleasesToXML(QDomDocument doc, QDomElement rl);
     void addRelease(const QString &os, const OSRelease &release);
     void reset();
@@ -60,6 +72,7 @@ private:
     /* Ordered resources */
     QVector<SHA> m_resources;
     AllReleaseList m_releaseList;
+    AllBranchList m_branchList;
     QString m_deployPath;
     QString m_serverPath;
     QVector<QString> m_osList;

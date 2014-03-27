@@ -3,9 +3,11 @@
 
 #include <QMainWindow>
 #include <QtXml/QDomDocument>
+#include <QModelIndex>
+#include <QStandardItemModel>
+
 #include "updatelistmodel.h"
 #include "manager.h"
-#include <QModelIndex>
 
 namespace Ui {
 class MainWindow;
@@ -25,11 +27,15 @@ public slots:
     void onSave();
     void onNewRelease();
     void onAddRelease();
+    void onSetParent();
+    void onSetBranchLeaf();
     void onOSChanged(QString);
     void contextualMenu(const QPoint &p);
     void updateReleaseList(const QString &os);
+    void updateBranches(const QString &os);
 protected:
     QString currentOS();
+    QString getCurrentBranch();
     void save();
     void openFile(const QString &);
     int parseCurrentFile();
@@ -41,7 +47,7 @@ private:
     QString currentFile;
     Manager manager;
     QDomElement releasesNode;
-
+    QStandardItemModel *m_releaseModel;
 };
 
 #endif // MAINWINDOW_H

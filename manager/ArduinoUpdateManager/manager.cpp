@@ -236,3 +236,31 @@ void Manager::createOSList(const QString &os, QFile &file)
     stream << d.toString();
     stream.flush();
 }
+
+void Manager::updateBranchesFromXML(QDomElement rl)
+{
+    QDomElement r = rl.firstChildElement("Branch");
+    m_branchList.clear();
+
+    for (; !r.isNull(); r = r.nextSiblingElement("Branch")) {
+        QString osname = r.attribute("os");
+        //assert();
+        OSBranch br;
+        br.name = r.attribute("name");
+        br.leaf = r.attribute("leaf");
+        br.description = br.name; // TODO
+        m_branchList[osname].push_back(br);
+    }
+}
+
+static OSBranchList noBranchList;
+
+const OSBranchList &Manager::getBranchList(const QString &os) const
+{
+    AllBranchList::const_iterator it = m_branchList.find(os);
+    if (it==m_branchList.end()) {
+        return noBranchList;
+    }
+    return it.value();
+}
+

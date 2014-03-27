@@ -75,7 +75,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="productComboBox"/>
+         <widget class="QComboBox" name="branchComboBox"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -96,14 +96,21 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="newProduct">
+           <widget class="QPushButton" name="newBranchButton">
             <property name="text">
              <string>New</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_2">
+           <widget class="QPushButton" name="editBranchButton">
+            <property name="text">
+             <string>Edit</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="deleteBranchButton">
             <property name="text">
              <string>Delete</string>
             </property>

@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "QFileDialog"
-#include "QDebug"
-#include "QtXml/QXmlReader"
-#include "QErrorMessage"
+#include <QFileDialog>
+#include <QDebug>
+#include <QtXml/QXmlReader>
+#include <QErrorMessage>
 #include <QStandardItemModel>
 #include "scanner.h"
 #include "releasedialog.h"
@@ -80,6 +80,23 @@ void MainWindow::onAddRelease()
     // Confirm release
 }
 
+QString MainWindow::getCurrentBranch()
+{
+    return ui->branchComboBox->currentText();
+}
+
+void MainWindow::onSetParent()
+{
+}
+
+void MainWindow::onSetBranchLeaf()
+{
+    QModelIndex index = ui->treeView->currentIndex();
+    QVariant v = m_releaseModel->data(index);
+
+    qDebug()<<"Set branch"<<getCurrentBranch()<<"leaf to"<< v.toString();
+}
+
 void MainWindow::contextualMenu(const QPoint &p)
 {
     QModelIndex index = ui->treeView->currentIndex();
@@ -88,7 +105,11 @@ void MainWindow::contextualMenu(const QPoint &p)
     menu->addAction("New release...", this, SLOT(onAddRelease()));
 
     if (index.isValid()) {
-        menu->addAction("Set parent...");
+        menu->addAction("Set parent...", this, SLOT(onSetParent()));
+    }
+    /* We need a branch. */
+    if (getCurrentBranch().size()) {
+        menu->addAction("Set as leaf for '"+ getCurrentBranch()+ "' branch", this, SLOT(onSetBranchLeaf()));
     }
     menu->exec(QCursor::pos());
 }
@@ -119,6 +140,7 @@ void MainWindow::onOSChanged(QString name)
 
     // Update release list.
     updateReleaseList(name);
+    updateBranches(name);
 }
 
 void MainWindow::onNewRelease()
@@ -233,9 +255,12 @@ int MainWindow::parseCurrentFile()
     QDomElement serverNode = docElem.firstChildElement("ServerLocation");
 
     manager.setServerPath(serverNode.text());
-    releasesNode = docElem.firstChildElement("Releases");
 
+    releasesNode = docElem.firstChildElement("Releases");
     manager.updateReleasesFromXML(releasesNode);
+
+    QDomElement branchesNode = docElem.firstChildElement("Branches");
+    manager.updateBranchesFromXML(branchesNode);
 
     qDebug()<<"Loaded all releases";
 
@@ -260,11 +285,14 @@ void MainWindow::updateReleaseList(const QString &os)
     /* Load all releases */
     if (os.size()==0)
         return;
+
     qDebug()<<"Updating list for os"<<os;
 
     QTreeView *view = ui->treeView;
-    QStandardItemModel *standardModel = new QStandardItemModel ;
-    QStandardItem *rootNode = standardModel->invisibleRootItem();
+
+    m_releaseModel = new QStandardItemModel ;
+
+    QStandardItem *rootNode = m_releaseModel->invisibleRootItem();
 
     QHash<QString,QStandardItem*> items;
 
@@ -284,5 +312,20 @@ void MainWindow::updateReleaseList(const QString &os)
 
         }
     }
-    view->setModel( standardModel );
+    view->setModel( m_releaseModel );
+}
+
+void MainWindow::updateBranches(const QString &os)
+{
+    /* Load all releases */
+    if (os.size()==0)
+        return;
+
+    qDebug()<<"Updating branches for os"<<os;
+
+    ui->branchComboBox->clear();
+
+    foreach (const OSBranch &b, manager.getBranchList(os)) {
+        ui->branchComboBox->addItem( b.name );
+    }
 }
