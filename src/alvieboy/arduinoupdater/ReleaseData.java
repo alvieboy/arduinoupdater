@@ -99,6 +99,7 @@ public class ReleaseData
         {
             ReleaseFileList files = getFiles();
             for (ReleaseFile f: files) {
+                Debugger.debug("File info: res "+f.rsid+" to "+f.target);
                 Debugger.debug("File: " + m_resources.get(f.rsid).sha + " " +f.target);
             }
         }
@@ -111,6 +112,7 @@ public class ReleaseData
     public ReleaseData() {
         m_branches=new ArrayList<Branch>();
         m_releases=new ArrayList<Release>();
+        m_resources= new HashMap<Integer,Resource>();
     }
 
     public Release findReleaseByVersion(String version)
@@ -147,7 +149,7 @@ public class ReleaseData
         }
 
 
-        NodeList resources = resourceNode.getElementsByTagName("Resources");
+        NodeList resources = resourceNode.getElementsByTagName("Res");
         for (i=0; i<resources.getLength();i++){
             Element e = (Element)resources.item(i);
             Resource r = new Resource();
@@ -156,6 +158,7 @@ public class ReleaseData
             r.size =Integer.parseInt( e.getAttribute("size"));
             r.sha = e.getAttribute("sha");
             m_resources.put(new Integer(r.id),r);
+            Debugger.debug("New resource "+r.id+" with SHA "+r.sha);
         }
 
         Debugger.debug("Iterating through branches");
