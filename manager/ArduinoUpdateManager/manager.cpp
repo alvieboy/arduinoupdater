@@ -15,6 +15,16 @@ bool OSRelease::haveFile(const QString &name) const
     return false;
 }
 
+ReleaseFile emptyFile;
+
+const ReleaseFile &OSRelease::getFile(const QString &name) const
+{
+    foreach (const ReleaseFile &f, files) {
+        if (f.name==name)
+            return f;
+    }
+    return emptyFile;
+}
 
 
 bool Manager::exists(const ReleaseFile &f) const
@@ -97,6 +107,39 @@ void Manager::saveReleasesToXML(QDomDocument doc, QDomElement rl)
     }
 }
 
+void Manager::saveBranchesToXML(QDomDocument doc, QDomElement rl)
+{
+    while (rl.hasChildNodes()) {
+        rl.removeChild(rl.firstChild());
+    }
+    foreach (const QString &os, m_releaseList.keys()) {
+        qDebug()<<"Handling os"<<os;
+        foreach (const OSRelease &osrl, m_releaseList[os]) {
+            qDebug()<<"Handling release"<<osrl.name;
+            QDomElement r = doc.createElement("Release");
+            r.setAttribute("os",os);
+            r.setAttribute("name",osrl.name);
+            rl.appendChild(r);
+            if (osrl.parent.size()) {
+                r.setAttribute("parent",osrl.parent);
+            }
+            // Files...
+            QDomElement files = doc.createElement("Files");
+            r.appendChild(files);
+            foreach (const ReleaseFile &f, osrl.files) {
+                QDomElement file=doc.createElement("File");
+                QString digest = f.sha.toHex();
+                file.setAttribute("sha", digest );
+                file.setAttribute("target", f.name);
+                file.setAttribute("size", QString::number(f.size));
+                if (f.exec)
+                    file.setAttribute("exec", "true");
+                files.appendChild(file);
+            }
+        }
+    }
+}
+
 void Manager::addRelease(const QString &os, const OSRelease &release)
 {
     m_releaseList[os].push_back(release);
@@ -157,20 +200,36 @@ void Manager::createLists()
     delete(c);
 }
 
-const OSRelease &Manager::getReleaseByName(const QString &name, const OSReleaseList &list)
+const OSRelease &Manager::getReleaseByName(const QString &name, const OSReleaseList &list) const
 {
     foreach (const OSRelease &r, list) {
         if (r.name == name)
             return r;
     }
+    qDebug()<<"Invalid release "<<name;
     throw "Invalid release";
 }
 
-bool Manager::isNewFile(const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file)
+OSRelease &Manager::getReleaseByName(const QString &name, OSReleaseList &list)
+{
+    for (OSReleaseList::iterator i = list.begin(); i!=list.end();i++) {
+        if (i->name == name)
+            return *i;
+    }
+    qDebug()<<"Invalid release "<<name;
+    throw "Invalid release";
+}
+
+const ReleaseFile &Manager::getParentFile( const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file )
 {
     if (release.parent.size()==0)
-        return true;
-    return ! getReleaseByName(release.parent, list).haveFile(file.name);
+        return emptyFile;
+
+    const OSRelease &prelease = getReleaseByName(release.parent, list);
+    if (prelease.name.size()) {
+        return emptyFile;
+    }
+    return prelease.getFile(file.name);
 }
 
 void Manager::createOSList(const QString &os, QFile &file)
@@ -197,6 +256,16 @@ void Manager::createOSList(const QString &os, QFile &file)
     QDomElement releases = d.createElement("Releases");
     rootNode.appendChild(releases);
 
+    QDomElement branches = d.createElement("Branches");
+    configNode.appendChild(branches);
+
+    foreach (const OSBranch &b, getBranchList(os)) {
+        QDomElement branch = d.createElement("Branch");
+        branch.setAttribute("name", b.name);
+        branch.setAttribute("leaf", b.leaf);
+        branches.appendChild(branch);
+    }
+
     /* Add resources and releases */
 
     QHash<SHA,uint> shaMap;
@@ -205,9 +274,20 @@ void Manager::createOSList(const QString &os, QFile &file)
         uint thisId;
         QDomElement release = d.createElement("Release");
         release.setAttribute("name", r.name);
+        release.setAttribute("parent", r.parent);
         releases.appendChild(release);
         foreach (const ReleaseFile &f, r.files) {
-            if (isNewFile(getReleaseList(os),r,f)) {
+
+            const ReleaseFile &parentFile = getParentFile( getReleaseList(os), r, f);
+            bool addFile = true;
+
+            if (parentFile.name.size()) {
+                // Same SHA ?
+                if (parentFile.sha == f.sha) {
+                    addFile = false;
+                }
+            }
+            if (addFile) {
                 if (shaMap.find(f.sha) == shaMap.end()) {
                     rsid++;
                     thisId=rsid;
@@ -215,7 +295,7 @@ void Manager::createOSList(const QString &os, QFile &file)
                     QDomElement rs = d.createElement("Res");
                     rs.setAttribute("id",rsid);
                     rs.setAttribute("sha",QString(f.sha.toHex()));
-                    rs.setAttribute("size", f.size);
+                    rs.setAttribute("size", QString::number(f.size));
                     resources.appendChild(rs);
                 } else {
                     thisId = shaMap[f.sha];
@@ -226,8 +306,10 @@ void Manager::createOSList(const QString &os, QFile &file)
                 if (f.exec)
                     file.setAttribute("exec", "yes");
                 release.appendChild(file);
-            }
+            } 
         }
+        /* Now, iterate through all parent files. If not present any more,
+         deprecate them. */
     }
 
 
@@ -253,6 +335,7 @@ void Manager::updateBranchesFromXML(QDomElement rl)
     }
 }
 
+
 static OSBranchList noBranchList;
 
 const OSBranchList &Manager::getBranchList(const QString &os) const
@@ -262,5 +345,11 @@ const OSBranchList &Manager::getBranchList(const QString &os) const
         return noBranchList;
     }
     return it.value();
+}
+
+void Manager::setParentRelease(const QString &os, const QString &release, const QString &parent)
+{
+    OSRelease &r = getReleaseByName(release, m_releaseList[os]);
+    r.parent = parent;
 }
 

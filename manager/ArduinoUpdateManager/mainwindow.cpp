@@ -7,6 +7,7 @@
 #include <QStandardItemModel>
 #include "scanner.h"
 #include "releasedialog.h"
+#include "selectparentdialog.h"
 #include "compressor.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -87,6 +88,21 @@ QString MainWindow::getCurrentBranch()
 
 void MainWindow::onSetParent()
 {
+    QModelIndex index = ui->treeView->currentIndex();
+    QVariant v = m_releaseModel->data(index);
+
+    SelectParentDialog d;
+    d.addRelease("<none>");
+    foreach (const OSRelease &r, manager.getReleaseList(currentOS())) {
+        d.addRelease(r.name);
+    }
+    if (d.exec()) {
+        QString parent =d.getParent();
+        if (parent=="<none>")
+            parent="";
+        manager.setParentRelease(currentOS(), v.toString(), parent);
+        updateReleaseList(currentOS());
+    }
 }
 
 void MainWindow::onSetBranchLeaf()
@@ -146,18 +162,12 @@ void MainWindow::onOSChanged(QString name)
 void MainWindow::onNewRelease()
 {
     ReleaseDialog d(this,true);
-    /*
-    foreach (const QString &r, manager.getReleaseList(ui->osComboBox->currentText())) {
-        d.addRelease(r);
-        }
-        */
     d.exec();
-
-
-
 }
+
 void MainWindow::onExit()
 {
+    
 
 }
 
@@ -305,11 +315,12 @@ void MainWindow::updateReleaseList(const QString &os)
     }
     /* Link them */
     foreach (const OSRelease &r, manager.getReleaseList(os)) {
+        QStandardItem *item = items.find(r.name).value();
         if (r.parent.size()==0  || items.find(r.parent)==items.end()) {
             qDebug()<<"No parent";
-            rootNode->appendRow( items.find(r.name).value() );
+            rootNode->appendRow( item );
         } else {
-
+            items[ r.parent ]->appendRow( item );
         }
     }
     view->setModel( m_releaseModel );

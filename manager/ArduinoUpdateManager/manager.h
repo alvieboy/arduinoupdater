@@ -28,6 +28,7 @@ struct OSRelease
     ReleaseFileList files;
     QString parent;
     bool haveFile(const QString &name) const;
+    const ReleaseFile &getFile(const QString &name) const;
 };
 
 struct OSBranch
@@ -52,9 +53,11 @@ public:
 
     void updateReleasesFromXML(QDomElement release);
     void updateBranchesFromXML(QDomElement release);
-    void saveBranchesToXML(QDomElement release);
+    void saveBranchesToXML(QDomDocument doc, QDomElement bl);
     void saveReleasesToXML(QDomDocument doc, QDomElement rl);
     void addRelease(const QString &os, const OSRelease &release);
+    void setParentRelease(const QString &os, const QString &release, const QString &parent);
+
     void reset();
     void addOS(const QString &os);
     void setDeployPath(const QString&path);
@@ -65,7 +68,12 @@ public:
 protected:
     void createOSList(const QString &os, QFile &file);
     bool isNewFile(const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file);
-    const OSRelease &getReleaseByName(const QString &name, const OSReleaseList &list);
+    const OSRelease &getReleaseByName(const QString &name, const OSReleaseList &list) const;
+    OSRelease &getReleaseByName(const QString &name, OSReleaseList &list);
+
+    const ReleaseFile &getParentFile( const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file );
+
+
 private:
     /* Fast list with all hashes */
     QHash<SHA,quint32> m_shaMap;

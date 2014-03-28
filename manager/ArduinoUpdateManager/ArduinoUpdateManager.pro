@@ -18,12 +18,15 @@ SOURCES += main.cpp\
         scanner.cpp\
         manager.cpp \
     releasedialog.cpp\
-    compressor.cpp
+    compressor.cpp \
+    selectparentdialog.cpp
 
 HEADERS  += mainwindow.h  updatelistmodel.h scanner.h manager.h \
-    releasedialog.h compressor.h
+    releasedialog.h compressor.h \
+    selectparentdialog.h
 
 FORMS    += mainwindow.ui \
-    releasedialog.ui
+    releasedialog.ui \
+    selectparentdialog.ui
 
 LIBS += -lz
