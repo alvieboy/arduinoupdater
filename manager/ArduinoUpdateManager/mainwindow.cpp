@@ -110,7 +110,9 @@ void MainWindow::onSetBranchLeaf()
     QModelIndex index = ui->treeView->currentIndex();
     QVariant v = m_releaseModel->data(index);
 
-    qDebug()<<"Set branch"<<getCurrentBranch()<<"leaf to"<< v.toString();
+    qDebug()<<"Set branch"<<getCurrentBranch()<<"leaf to"<< v.toString(); 
+
+    manager.setBranchLeaf(currentOS(),getCurrentBranch(),v.toString());
 }
 
 void MainWindow::contextualMenu(const QPoint &p)

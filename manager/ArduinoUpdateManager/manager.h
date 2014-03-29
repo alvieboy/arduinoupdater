@@ -58,6 +58,7 @@ public:
     void addRelease(const QString &os, const OSRelease &release);
     void setParentRelease(const QString &os, const QString &release, const QString &parent);
 
+    void setBranchLeaf(const QString &os, const QString &branch, const QString &leaf);
     void reset();
     void addOS(const QString &os);
     void setDeployPath(const QString&path);
@@ -72,6 +73,7 @@ protected:
     OSRelease &getReleaseByName(const QString &name, OSReleaseList &list);
 
     const ReleaseFile &getParentFile( const OSReleaseList &list, const OSRelease &release, const ReleaseFile &file );
+    QString getDownloadSize(const QString &sha);
 
 
 private:

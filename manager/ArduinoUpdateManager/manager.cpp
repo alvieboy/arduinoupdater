@@ -232,6 +232,15 @@ const ReleaseFile &Manager::getParentFile( const OSReleaseList &list, const OSRe
     return prelease.getFile(file.name);
 }
 
+QString Manager::getDownloadSize(const QString &sha)
+{
+    QString target = m_deployPath + QDir::separator() + "blobs" + QDir::separator() + sha + ".gz";
+
+    QFile f(target);
+
+    return QString::number(f.size());
+}
+
 void Manager::createOSList(const QString &os, QFile &file)
 {
     QDomDocument d;
@@ -269,6 +278,7 @@ void Manager::createOSList(const QString &os, QFile &file)
     /* Add resources and releases */
 
     QHash<SHA,uint> shaMap;
+    QHash<QString,bool> filesMap;
 
     foreach (const OSRelease &r, getReleaseList(os)) {
         uint thisId;
@@ -296,6 +306,7 @@ void Manager::createOSList(const QString &os, QFile &file)
                     rs.setAttribute("id",rsid);
                     rs.setAttribute("sha",QString(f.sha.toHex()));
                     rs.setAttribute("size", QString::number(f.size));
+                    rs.setAttribute("dsize", getDownloadSize(f.sha.toHex()));
                     resources.appendChild(rs);
                 } else {
                     thisId = shaMap[f.sha];
@@ -306,10 +317,22 @@ void Manager::createOSList(const QString &os, QFile &file)
                 if (f.exec)
                     file.setAttribute("exec", "yes");
                 release.appendChild(file);
-            } 
+            }
+            filesMap[f.name]=true;
         }
         /* Now, iterate through all parent files. If not present any more,
          deprecate them. */
+        if (r.parent.size()) {
+            foreach (const ReleaseFile &f, getReleaseByName(r.parent,getReleaseList(os)).files) {
+                if (filesMap.find(f.name)==filesMap.end()) {
+                    QDomElement file = d.createElement("File");
+                    file.setAttribute("target", f.name);
+                    file.setAttribute("rsid", "-1");
+                    release.appendChild(file);
+                    qDebug()<<f.name<<"deprecated.";
+                } 
+            }
+        }
     }
 
 
@@ -346,6 +369,23 @@ const OSBranchList &Manager::getBranchList(const QString &os) const
     }
     return it.value();
 }
+
+void Manager::setBranchLeaf(const QString &os, const QString &branch, const QString &leaf)
+{
+    AllBranchList::iterator it = m_branchList.find(os);
+    if (it!=m_branchList.end()) {
+        OSBranchList::iterator i;
+
+        for ( i=it->begin(); i!=it->end(); i++ ) {
+            if (i->name==branch) {
+                i->leaf=leaf;
+                break;
+            }
+        }
+    }
+}
+
+
 
 void Manager::setParentRelease(const QString &os, const QString &release, const QString &parent)
 {
